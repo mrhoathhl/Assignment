@@ -26,7 +26,7 @@ public class UIPanelGame : MonoBehaviour,IMenu
 
     private void OnClickRestart()
     {
-        m_mngr.ShowPauseMenu();
+        m_mngr.RestartGame();
     }
 
     public void Setup(UIMainManager mngr)

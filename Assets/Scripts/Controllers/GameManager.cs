@@ -39,6 +39,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] ItemManagerSO m_itemManager;
     [SerializeField] GameSettings m_gameSettings;
 
+    eLevelMode currentLevelMode;
 
     private BoardController m_boardController;
 
@@ -82,6 +83,7 @@ public class GameManager : MonoBehaviour
 
     public void LoadLevel(eLevelMode mode)
     {
+        currentLevelMode = mode;
         m_boardController = new GameObject("BoardController").AddComponent<BoardController>();
         m_boardController.StartGame(this, m_gameSettings, m_itemManager);
 
@@ -99,6 +101,13 @@ public class GameManager : MonoBehaviour
         m_levelCondition.ConditionCompleteEvent += GameOver;
 
         State = eStateGame.GAME_STARTED;
+    }
+
+    public void RestartLevel()
+    {
+        Destroy(m_boardController.gameObject);
+
+        LoadLevel(currentLevelMode);
     }
 
     public void GameOver()

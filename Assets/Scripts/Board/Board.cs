@@ -139,9 +139,19 @@ public class Board
         }
     }
 
+    private static readonly Vector2Int[] Directions = new Vector2Int[]
+    {
+        new Vector2Int(0, 1), // Up
+        new Vector2Int(0, -1), // Down
+        new Vector2Int(-1, 0), // Left
+        new Vector2Int(1, 0) // Right
+    };
 
+    private Dictionary<string, int> itemCounts;
     internal void FillGapsWithNewItems()
     {
+        itemCounts = GetCurrentItemCounts();
+
         for (int x = 0; x < boardSizeX; x++)
         {
             for (int y = 0; y < boardSizeY; y++)
@@ -149,19 +159,71 @@ public class Board
                 Cell cell = m_cells[x, y];
                 if (!cell.IsEmpty) continue;
 
-                NormalItem item = new NormalItem();
+                HashSet<string> surroundingItemIds = GetSurroundingItemIds(x, y);
 
-                var itemConfig = _itemManager.GetRandomItem();
+                var candidateConfigs = _itemManager.Items
+                    .Where(cfg => !surroundingItemIds.Contains(cfg.name))
+                    .OrderBy(cfg => itemCounts.TryGetValue(cfg.name, out int count) ? count : 0)
+                    .ToList();
+
+                Sprite selectedConfig = candidateConfigs.FirstOrDefault() ?? _itemManager.GetRandomItem();
+                string selectedName = selectedConfig.name;
+
+                NormalItem item = new NormalItem();
                 var view = GameObject.Instantiate(_itemManager.NormalItemPrefab).transform;
-                view.gameObject.GetComponent<SpriteRenderer>().sprite = itemConfig;
-                item.SetView(view, itemConfig.name);
+                view.GetComponent<SpriteRenderer>().sprite = selectedConfig;
+
+                item.SetView(view, selectedName);
                 item.SetViewRoot(m_root);
 
                 cell.Assign(item);
                 cell.ApplyItemPosition(true);
+
+                itemCounts = GetCurrentItemCounts();
             }
         }
     }
+
+    private Dictionary<string, int> GetCurrentItemCounts()
+    {
+        Dictionary<string, int> counts = new Dictionary<string, int>();
+        for (int x = 0; x < boardSizeX; x++)
+        {
+            for (int y = 0; y < boardSizeY; y++)
+            {
+                var item = m_cells[x, y].Item;
+                if (item != null)
+                {
+                    string id = item.Name;
+                    counts[id] = counts.TryGetValue(id, out int count) ? count + 1 : 1;
+                }
+            }
+        }
+
+        return counts;
+    }
+
+    private HashSet<string> GetSurroundingItemIds(int x, int y)
+    {
+        HashSet<string> ids = new HashSet<string>();
+        foreach (var dir in Directions)
+        {
+            int checkX = x + dir.x;
+            int checkY = y + dir.y;
+
+            if (checkX >= 0 && checkX < boardSizeX && checkY >= 0 && checkY < boardSizeY)
+            {
+                var neighbor = m_cells[checkX, checkY];
+                if (!neighbor.IsEmpty && neighbor.Item != null)
+                {
+                    ids.Add(neighbor.Item.Name);
+                }
+            }
+        }
+
+        return ids;
+    }
+
 
     internal void ExplodeAllItems()
     {

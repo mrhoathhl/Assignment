@@ -29,3 +29,5 @@ MonoBehaviour:
     type: 3}
   bonusItemPrefab: {fileID: 1645311756642076403, guid: 3e0cdf80cfc4e074c9a3869cdfef4706,
     type: 3}
+  backgroundItemPrefab: {fileID: 1645311756642076403, guid: 36ec5f479201921458e80cc24e85189a,
+    type: 3}
